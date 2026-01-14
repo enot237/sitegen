@@ -1,115 +1,123 @@
 export default function LandingPage() {
   return (
-    <main className="landing">
-      <header className="nav">
-        <div className="brand">RoboSite</div>
-        <nav className="nav-links">
-          <a href="#product">О продукте</a>
-          <a href="#features">Фичи</a>
-          <a href="#team">Команда</a>
-          <a href="#stack">Технологии</a>
-          <a href="#contacts">Контакты</a>
-          <a className="button-ghost" href="/login">Login</a>
+    <main className="min-h-screen bg-gradient-to-br from-[#ffffff] via-[#f7f6f2] to-[#edf6ff] text-slate-900">
+      <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-6 py-6">
+        <div className="text-lg font-semibold tracking-tight">RoboSite</div>
+        <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
+          <a href="#product" className="hover:text-slate-900">О продукте</a>
+          <a href="#features" className="hover:text-slate-900">Фичи</a>
+          <a href="#team" className="hover:text-slate-900">Команда</a>
+          <a href="#stack" className="hover:text-slate-900">Технологии</a>
+          <a href="#contacts" className="hover:text-slate-900">Контакты</a>
         </nav>
+        <a
+          href="/login"
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:-translate-y-0.5 hover:shadow"
+        >
+          Login
+        </a>
       </header>
 
-      <section id="product" className="hero">
+      <section id="product" className="mx-auto grid w-full max-w-6xl gap-10 px-6 pb-20 pt-10 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <p className="eyebrow">Генератор лендингов под ключ</p>
-          <h1 className="hero-title">
-            RoboSite собирает красивые сайты за минуты, без ручной верстки.
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">AI generation studio</p>
+          <h1 className="mt-4 text-4xl font-semibold leading-tight text-slate-900 md:text-5xl">
+            RoboSite превращает идеи в красивые лендинги за минуты.
           </h1>
-          <p className="hero-lead">
-            Вы описываете идею, мы превращаем её в полноценный лендинг на React + Tailwind, 
-            собираем и публикуем в S3. Подходит для агентств, студий и команд продаж.
+          <p className="mt-5 text-base text-slate-600">
+            Вы описываете продукт — мы автоматически создаём проект на React + Tailwind,
+            собираем его и публикуем в S3. Всё, что нужно, — один промпт.
           </p>
-          <div className="hero-actions">
-            <a className="button-primary" href="/login">Перейти в кабинет</a>
-            <a className="button-secondary" href="#features">Посмотреть фичи</a>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/login"
+              className="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5"
+            >
+              Перейти в кабинет
+            </a>
+            <a
+              href="#features"
+              className="rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700"
+            >
+              Посмотреть фичи
+            </a>
           </div>
         </div>
-        <div className="hero-card">
-          <h3>Как работает</h3>
-          <ol>
-            <li>Вводите client_id и промпт.</li>
-            <li>RoboSite генерирует проект и билдит его.</li>
-            <li>Готовый сайт автоматически появляется в S3.</li>
+        <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+          <h3 className="text-lg font-semibold text-slate-900">Как это работает</h3>
+          <ol className="mt-4 space-y-3 text-sm text-slate-600">
+            <li>1. Вводите client_id и промпт.</li>
+            <li>2. RoboSite генерирует проект и билдит его.</li>
+            <li>3. Готовый сайт появляется в S3 и CDN.</li>
           </ol>
-          <div className="hero-meta">
+          <div className="mt-6 grid gap-2 text-xs text-slate-500">
             <span>Формат: Vite + React + Tailwind</span>
             <span>Публикация: S3 + CDN</span>
           </div>
         </div>
       </section>
 
-      <section id="features" className="section">
-        <h2 className="section-title">Фичи</h2>
-        <div className="card-grid">
-          <article className="card">
-            <h3>Длинные лендинги</h3>
-            <p>Hero, преимущества, кейсы, тарифы, FAQ и сильный CTA — сразу в одном билде.</p>
-          </article>
-          <article className="card">
-            <h3>Автосборка</h3>
-            <p>Мы сами запускаем Vite build и загружаем статику в S3, без ручных шагов.</p>
-          </article>
-          <article className="card">
-            <h3>Контроль качества</h3>
-            <p>Четкие промпты и повторная починка JSON, чтобы не терять генерации.</p>
-          </article>
-          <article className="card">
-            <h3>Готово к масштабированию</h3>
-            <p>Очередь задач и воркеры позволяют обрабатывать много запросов параллельно.</p>
-          </article>
+      <section id="features" className="mx-auto w-full max-w-6xl px-6 py-14">
+        <h2 className="text-2xl font-semibold text-slate-900">Фичи продукта</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {[
+            ["Длинные лендинги", "Готовые блоки: hero, преимущества, кейсы, тарифы, FAQ и CTA."],
+            ["Автосборка", "Собираем Vite build и сразу выкладываем в S3 без ручных шагов."],
+            ["Параллельные генерации", "Очередь задач и воркеры позволяют масштабироваться."],
+            ["Контроль качества", "Фиксируем JSON, сохраняем логи, следим за токенами."]
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+              <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
+              <p className="mt-2 text-sm text-slate-600">{body}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section id="team" className="section">
-        <h2 className="section-title">Команда</h2>
-        <div className="card-grid single">
-          <article className="card">
-            <h3>Анисимов Евгений</h3>
-            <p>Основатель и продуктовый лидер RoboSite.</p>
-          </article>
+      <section id="team" className="mx-auto w-full max-w-6xl px-6 py-14">
+        <h2 className="text-2xl font-semibold text-slate-900">Команда</h2>
+        <div className="mt-6 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+          <h3 className="text-lg font-semibold">Анисимов Евгений</h3>
+          <p className="mt-2 text-sm text-slate-600">Основатель и продуктовый лидер RoboSite.</p>
         </div>
       </section>
 
-      <section id="stack" className="section">
-        <h2 className="section-title">Технологии простыми словами</h2>
-        <div className="card">
-          <ul className="stack-list">
-            <li>Сайт собирается автоматически как конструктор из готовых блоков.</li>
+      <section id="stack" className="mx-auto w-full max-w-6xl px-6 py-14">
+        <h2 className="text-2xl font-semibold text-slate-900">Технологии простыми словами</h2>
+        <div className="mt-6 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+          <ul className="space-y-3 text-sm text-slate-600">
             <li>ИИ пишет код, а сервер проверяет и публикует его на хостинге.</li>
-            <li>Все файлы складываются в S3, чтобы быстро раздавать через CDN.</li>
-            <li>Очередь задач помогает делать сразу много сайтов без сбоев.</li>
+            <li>Каждый сайт — это готовый проект, который можно масштабировать.</li>
+            <li>Файлы хранятся в S3 и быстро раздаются через CDN.</li>
+            <li>Очередь задач помогает обрабатывать несколько генераций параллельно.</li>
           </ul>
         </div>
       </section>
 
-      <section id="contacts" className="section">
-        <h2 className="section-title">Контакты</h2>
-        <div className="card-grid">
-          <article className="card">
-            <h3>Связь</h3>
-            <p>hello@robosite.dev</p>
-            <p>+7 (999) 000-00-00</p>
-          </article>
-          <article className="card">
-            <h3>Адрес</h3>
-            <p>Москва, ул. Примерная, 10</p>
-            <p>Бизнес-центр "Orbit"</p>
-          </article>
-          <article className="card">
-            <h3>Соцсети</h3>
-            <p>@robosite</p>
-            <p>t.me/robosite</p>
-          </article>
+      <section id="contacts" className="mx-auto w-full max-w-6xl px-6 py-14">
+        <h2 className="text-2xl font-semibold text-slate-900">Контакты</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+            <h3 className="text-lg font-semibold">Связь</h3>
+            <p className="mt-2 text-sm text-slate-600">hello@robosite.dev</p>
+            <p className="text-sm text-slate-600">+7 (999) 000-00-00</p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+            <h3 className="text-lg font-semibold">Адрес</h3>
+            <p className="mt-2 text-sm text-slate-600">Москва, ул. Примерная, 10</p>
+            <p className="text-sm text-slate-600">БЦ "Orbit"</p>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card">
+            <h3 className="text-lg font-semibold">Соцсети</h3>
+            <p className="mt-2 text-sm text-slate-600">@robosite</p>
+            <p className="text-sm text-slate-600">t.me/robosite</p>
+          </div>
         </div>
       </section>
 
-      <footer className="footer">
+      <footer className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-6 pb-12 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
         <span>RoboSite © 2026. Все права защищены.</span>
-        <a href="/login">Login</a>
+        <a href="/login" className="text-slate-600 hover:text-slate-900">Login</a>
       </footer>
     </main>
   );

@@ -8,4 +8,4 @@ RUN npm install
 COPY src ./src
 COPY templates ./templates
 
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npm install && npm run dev"]

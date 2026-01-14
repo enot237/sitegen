@@ -49,8 +49,72 @@ const ensureSchema = async () => {
         );
       `);
 
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS sites (
+          id BIGSERIAL PRIMARY KEY,
+          user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          client_id TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          notes TEXT,
+          status TEXT NOT NULL DEFAULT 'draft',
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `);
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS job_logs (
+          id BIGSERIAL PRIMARY KEY,
+          job_id TEXT NOT NULL REFERENCES jobs(job_id) ON DELETE CASCADE,
+          message TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+      `);
+
+      await client.query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name TEXT;"
+      );
+      await client.query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone TEXT;"
+      );
+      await client.query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS company TEXT;"
+      );
+      await client.query(
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();"
+      );
+
+      await client.query(
+        "ALTER TABLE sites ADD COLUMN IF NOT EXISTS notes TEXT;"
+      );
+
+      await client.query(
+        "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS site_id BIGINT REFERENCES sites(id) ON DELETE SET NULL;"
+      );
+      await client.query(
+        "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS tokens_prompt INTEGER;"
+      );
+      await client.query(
+        "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS tokens_completion INTEGER;"
+      );
+      await client.query(
+        "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS tokens_total INTEGER;"
+      );
+      await client.query(
+        "ALTER TABLE jobs ADD COLUMN IF NOT EXISTS model TEXT;"
+      );
+
       await client.query(
         "CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id);"
+      );
+
+      await client.query(
+        "CREATE INDEX IF NOT EXISTS idx_jobs_site_id ON jobs(site_id);"
+      );
+
+      await client.query(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_sites_user_client ON sites(user_id, client_id);"
       );
 
       await client.query("SELECT pg_advisory_unlock($1)", [lockKey]);

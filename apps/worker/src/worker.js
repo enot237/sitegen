@@ -249,6 +249,16 @@ const updateJobRecord = async (jobId, fields) => {
   );
 };
 
+const appendJobLog = async (jobId, message) => {
+  if (!message) {
+    return;
+  }
+  await pool.query(
+    "INSERT INTO job_logs (job_id, message) VALUES ($1, $2)",
+    [String(jobId), String(message)]
+  );
+};
+
 const callOpenAIContent = async (systemPrompt, userPrompt, options = {}) => {
   const apiKey = requireEnv("OPENAI_API_KEY");
   const model = options.modelOverride || process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -349,7 +359,11 @@ const callOpenAIContent = async (systemPrompt, userPrompt, options = {}) => {
     throw new Error("OpenAI returned empty content.");
   }
 
-  return stripCodeFence(content);
+  return {
+    content: stripCodeFence(content),
+    usage: data?.usage || null,
+    model: data?.model || model
+  };
 };
 
 const repairJsonWithOpenAI = async (rawContent, requestId) => {
@@ -379,26 +393,41 @@ const repairJsonWithOpenAI = async (rawContent, requestId) => {
   });
 };
 
+const accumulateUsage = (acc, usage) => {
+  if (!usage) {
+    return acc;
+  }
+  acc.prompt += Number(usage.prompt_tokens || 0);
+  acc.completion += Number(usage.completion_tokens || 0);
+  acc.total += Number(usage.total_tokens || 0);
+  return acc;
+};
+
 const generateProjectFiles = async (prompt, requestId) => {
   const systemPrompt = "You generate Vite React + Tailwind project source files.";
   const userPrompt = buildProjectPrompt(prompt);
-  const content = await callOpenAIContent(systemPrompt, userPrompt);
+  const usageTotals = { prompt: 0, completion: 0, total: 0 };
+  const firstResponse = await callOpenAIContent(systemPrompt, userPrompt);
+  accumulateUsage(usageTotals, firstResponse.usage);
   let parsed;
   try {
-    parsed = parseJsonContent(content);
+    parsed = parseJsonContent(firstResponse.content);
   } catch (error) {
-    const preview = String(content || "").slice(0, 800);
+    const preview = String(firstResponse.content || "").slice(0, 800);
     console.warn(`[${requestId || "unknown"}] OpenAI JSON parse error: ${error.message}`);
     console.warn(`[${requestId || "unknown"}] OpenAI JSON content preview: ${preview}`);
-    const repaired = await repairJsonWithOpenAI(String(content || ""), requestId);
-    parsed = parseJsonContent(repaired);
+    const repaired = await repairJsonWithOpenAI(String(firstResponse.content || ""), requestId);
+    accumulateUsage(usageTotals, repaired.usage);
+    parsed = parseJsonContent(repaired.content);
   }
   if (!parsed || !Array.isArray(parsed.files)) {
     throw new Error("OpenAI response is missing the files array.");
   }
   return {
     siteTitle: parsed.siteTitle,
-    files: parsed.files
+    files: parsed.files,
+    tokens: usageTotals,
+    model: firstResponse.model
   };
 };
 
@@ -433,6 +462,7 @@ const generateSite = async (job) => {
   console.log(
     `[${requestId}] generate start clientId=${safeClientId} promptLength=${String(prompt).length}`
   );
+  await appendJobLog(requestId, "Job started");
 
   const baseUrl =
     process.env.S3_PUBLIC_BASE_URL ||
@@ -451,6 +481,7 @@ const generateSite = async (job) => {
       progress: { step: "prepare" },
       error: null
     });
+    await appendJobLog(requestId, "Preparing workspace");
     await job.updateProgress({ step: "prepare" });
     workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "robosite-"));
     projectDir = path.join(workspaceDir, "project");
@@ -458,12 +489,14 @@ const generateSite = async (job) => {
     await fs.cp(templateDir, projectDir, { recursive: true });
 
     await updateJobRecord(requestId, { progress: { step: "generate" } });
+    await appendJobLog(requestId, "Generating project files with OpenAI");
     await job.updateProgress({ step: "generate" });
     const spec = await generateProjectFiles(prompt, requestId);
     await writeGeneratedFiles(projectDir, spec.files);
     await updateSiteTitle(projectDir, spec.siteTitle || safeClientId);
 
     await updateJobRecord(requestId, { progress: { step: "install" } });
+    await appendJobLog(requestId, "Installing dependencies");
     await job.updateProgress({ step: "install" });
     await runCommand("npm", ["install", "--include=dev"], {
       cwd: projectDir,
@@ -475,6 +508,7 @@ const generateSite = async (job) => {
     });
 
     await updateJobRecord(requestId, { progress: { step: "build" } });
+    await appendJobLog(requestId, "Building project with Vite");
     await job.updateProgress({ step: "build" });
     await runCommand("npm", ["run", "build"], {
       cwd: projectDir,
@@ -485,6 +519,7 @@ const generateSite = async (job) => {
     const buildPrefix = `${safeClientId}/build`;
 
     await updateJobRecord(requestId, { progress: { step: "upload-src" } });
+    await appendJobLog(requestId, "Uploading src to S3");
     await job.updateProgress({ step: "upload-src" });
     await uploadDirectory(s3, bucket, projectDir, srcPrefix, {
       ignoreDirs: ["node_modules", "build", ".git"],
@@ -493,6 +528,7 @@ const generateSite = async (job) => {
 
     const buildDir = path.join(projectDir, "build");
     await updateJobRecord(requestId, { progress: { step: "upload-build" } });
+    await appendJobLog(requestId, "Uploading build to S3");
     await job.updateProgress({ step: "upload-build" });
     await uploadDirectory(s3, bucket, buildDir, buildPrefix, { acl });
 
@@ -513,8 +549,16 @@ const generateSite = async (job) => {
         s3Src: `s3://${bucket}/${srcPrefix}`,
         s3Build: `s3://${bucket}/${buildPrefix}`
       },
+      tokens_prompt: spec.tokens?.prompt || 0,
+      tokens_completion: spec.tokens?.completion || 0,
+      tokens_total: spec.tokens?.total || 0,
+      model: spec.model || null,
       error: null
     });
+    await appendJobLog(
+      requestId,
+      `Completed. Tokens: ${spec.tokens?.total || 0}`
+    );
 
     return {
       clientId: safeClientId,
@@ -530,6 +574,7 @@ const generateSite = async (job) => {
       progress: { step: "failed" },
       error: error.message
     });
+    await appendJobLog(requestId, `Failed: ${error.message}`);
     throw error;
   } finally {
     if (workspaceDir && !keepWorkdir) {
