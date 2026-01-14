@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RoboSite Generator</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <div class="eyebrow">Генератор клиентских сайтов</div>
+        <h1>Один промпт — один сайт</h1>
+        <p class="lead">Введите client_id и коротко опишите сайт. Мы сгенерируем Vite + React + Tailwind проект, соберем его и сохраним в S3.</p>
+
+        <form id="generate-form" class="form">
+          <label class="field">
+            <span>Client ID</span>
+            <input
+              type="text"
+              name="clientId"
+              placeholder="acme-co"
+              autocomplete="off"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Промпт</span>
+            <textarea
+              name="prompt"
+              rows="6"
+              placeholder="Лэндинг для кофейни с акцентом на сезонные напитки..."
+              required
+            ></textarea>
+          </label>
+
+          <button type="submit" class="cta">
+            Сгенерировать сайт
+          </button>
+        </form>
+
+        <div id="status" class="status" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
