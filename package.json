@@ -1,15 +1,16 @@
 {
   "name": "robosite",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Generate static client sites via OpenAI and upload to S3.",
-  "main": "server.js",
+  "description": "Monorepo for RoboSite web, API, and worker.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
-  },
-  "dependencies": {
-    "@aws-sdk/client-s3": "^3.654.0",
-    "express": "^4.19.2"
+    "dev": "docker compose up --build",
+    "api": "npm --workspace @robosite/api run dev",
+    "worker": "npm --workspace @robosite/worker run dev",
+    "web": "npm --workspace @robosite/web run dev"
   }
 }

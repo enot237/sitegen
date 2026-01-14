@@ -1,0 +1,17 @@
+{
+  "name": "@robosite/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch src/worker.js",
+    "start": "node src/worker.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.654.0",
+    "bullmq": "^5.8.0",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "pg": "^8.12.0"
+  }
+}
