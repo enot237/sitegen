@@ -2,6 +2,10 @@
 
 Monorepo that powers RoboSite: a web app that generates Vite + React + Tailwind landing pages using OpenAI, builds them, and uploads both source and build output to S3.
 
+# Generated site example
+
+<img width="1618" height="950" alt="image" src="https://github.com/user-attachments/assets/ad0e4412-8f11-49ed-a29e-b2033cb9e4a8" />
+
 ## Architecture
 
 - **Web** (`apps/web`): UI for submitting prompts and tracking job status.
