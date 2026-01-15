@@ -259,6 +259,53 @@ const appendJobLog = async (jobId, message) => {
   );
 };
 
+const isResponsesEndpoint = (apiUrl) => /\/v1\/responses\/?$/.test(apiUrl || "");
+
+const extractTextFromResponses = (data) => {
+  if (!data || typeof data !== "object") {
+    return null;
+  }
+  if (typeof data.output_text === "string" && data.output_text.trim()) {
+    return data.output_text.trim();
+  }
+  const output = Array.isArray(data.output) ? data.output : [];
+  const textParts = [];
+  for (const item of output) {
+    const content = Array.isArray(item?.content) ? item.content : [];
+    for (const part of content) {
+      if (!part) {
+        continue;
+      }
+      if (typeof part.text === "string") {
+        textParts.push(part.text);
+      }
+    }
+  }
+  const joined = textParts.join("\n").trim();
+  return joined || null;
+};
+
+const normalizeResponsesTextFormat = (rawFormat) => {
+  if (!rawFormat) {
+    return null;
+  }
+  const trimmed = String(rawFormat).trim();
+  if (!trimmed) {
+    return null;
+  }
+  if (trimmed.startsWith("{")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object") {
+        return parsed;
+      }
+    } catch (_) {
+      // fall through to treat as a simple type string
+    }
+  }
+  return { type: trimmed };
+};
+
 const callOpenAIContent = async (systemPrompt, userPrompt, options = {}) => {
   const apiKey = requireEnv("OPENAI_API_KEY");
   const model = options.modelOverride || process.env.OPENAI_MODEL || "gpt-4o-mini";
@@ -277,25 +324,51 @@ const callOpenAIContent = async (systemPrompt, userPrompt, options = {}) => {
     /^gpt-5/i.test(model) ||
     process.env.OPENAI_USE_MAX_COMPLETION_TOKENS === "true";
 
-  const payload = {
-    model,
-    temperature: 0.7,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ]
-  };
+  const useResponses = isResponsesEndpoint(apiUrl);
+  const temperatureRaw = process.env.OPENAI_TEMPERATURE;
+  const temperature = temperatureRaw !== undefined && temperatureRaw !== ""
+    ? Number.parseFloat(temperatureRaw)
+    : null;
+
+  const payload = useResponses
+    ? {
+        model,
+        input: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }
+    : {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      };
+
+  if (Number.isFinite(temperature)) {
+    payload.temperature = temperature;
+  }
 
   if (reasoningEffortEnv) {
     payload.reasoning = { effort: reasoningEffortEnv };
   }
 
   if (responseFormat) {
-    payload.response_format = { type: responseFormat };
+    if (useResponses) {
+      const format = normalizeResponsesTextFormat(responseFormat);
+      if (format) {
+        payload.text = { format };
+      }
+    } else {
+      payload.response_format = { type: responseFormat };
+    }
   }
 
   if (Number.isFinite(maxTokens) && maxTokens > 0) {
-    if (useMaxCompletionTokens) {
+    if (useResponses) {
+      payload.max_output_tokens = maxTokens;
+    } else if (useMaxCompletionTokens) {
       payload.max_completion_tokens = maxTokens;
     } else {
       payload.max_tokens = maxTokens;
@@ -333,8 +406,14 @@ const callOpenAIContent = async (systemPrompt, userPrompt, options = {}) => {
     const preview = responseText.slice(0, 500);
     throw new Error(`OpenAI invalid JSON: ${error.message}. Preview: ${preview}`);
   }
-  const choice = data?.choices?.[0];
-  const rawContent = choice?.message?.content ?? choice?.message?.content?.text;
+  let rawContent = null;
+  if (useResponses) {
+    rawContent = extractTextFromResponses(data);
+  }
+  if (!rawContent) {
+    const choice = data?.choices?.[0];
+    rawContent = choice?.message?.content ?? choice?.message?.content?.text;
+  }
 
   let content = rawContent;
   if (Array.isArray(rawContent)) {
